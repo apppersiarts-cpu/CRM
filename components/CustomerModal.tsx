@@ -35,6 +35,12 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
   });
 
   const [activeTab, setActiveTab] = useState<'info' | 'docs'>('info');
+  const [configMissing, setConfigMissing] = useState(false);
+
+  useEffect(() => {
+    // Verifica se a rota de upload está configurada (opcionalmente)
+    // Por enquanto, vamos apenas monitorar erros de upload
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +61,10 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
         const data = await response.json();
 
         if (!response.ok) {
+          if (data.error?.includes('Configuração ausente')) {
+            setConfigMissing(true);
+            setActiveTab('info'); // Volta para a aba info para mostrar o erro proeminente
+          }
           throw new Error(data.error || 'Upload failed');
         }
 
@@ -124,6 +134,19 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'info' ? (
             <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
+              {/* Aviso de Configuração do Blob */}
+              {configMissing && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-4">
+                  <AlertCircle className="text-red-600 shrink-0" size={20} />
+                  <div>
+                    <p className="text-sm font-bold text-red-800">Erro de Configuração</p>
+                    <p className="text-xs text-red-700 mt-1">
+                      O token do Vercel Blob não foi encontrado. O upload de documentos não funcionará até que a chave seja configurada no arquivo <code className="bg-red-100 px-1 rounded">/app/api/upload/route.ts</code> ou no painel do AI Studio.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Alerta de Documentação Pendente */}
               {formData.documents && formData.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].includes(d.type)).length < 5 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">

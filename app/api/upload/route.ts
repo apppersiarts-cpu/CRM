@@ -5,19 +5,24 @@ export async function POST(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
   const filename = searchParams.get('filename');
 
+  // VOCÊ PODE INSERIR SUA CHAVE DIRETAMENTE AQUI SE PREFERIR
+  const HARDCODED_TOKEN = ""; 
+  const token = process.env.BLOB_READ_WRITE_TOKEN || HARDCODED_TOKEN;
+
   if (!filename) {
     return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!token) {
     return NextResponse.json({ 
-      error: 'Configuração ausente: BLOB_READ_WRITE_TOKEN não encontrado. Por favor, configure a variável de ambiente no painel da Vercel ou no AI Studio.' 
+      error: 'Configuração ausente: BLOB_READ_WRITE_TOKEN não encontrado. Por favor, insira sua chave no arquivo /app/api/upload/route.ts ou configure no AI Studio.' 
     }, { status: 500 });
   }
 
   try {
     const blob = await put(filename, request.body!, {
       access: 'public',
+      token: token
     });
 
     return NextResponse.json(blob);
