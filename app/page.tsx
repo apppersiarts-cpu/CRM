@@ -214,7 +214,7 @@ export default function CRMPage() {
         await fetch(`/api/customers/${id}`, { method: 'DELETE' });
         setCustomers(prev => prev.filter(c => c.id !== id));
         setIsModalOpen(false);
-        setSelectedCustomer(null);
+        setSelectedCustomer(undefined);
       } catch (error) {
         console.error('Failed to delete customer:', error);
         alert('Erro ao excluir cliente do banco de dados.');
