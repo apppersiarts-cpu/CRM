@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "Broker": {
+      "title": "Broker",
+      "description": "Real estate broker or agent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "company": { "type": "string" },
+        "password": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Real estate customer for credit analysis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "cpf": { "type": "string" },
+        "income": { "type": "number" },
+        "project": { "type": "string" },
+        "unit": { "type": "string" },
+        "propertyValue": { "type": "number" },
+        "financedValue": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "analyst": { "type": "string" },
+        "brokerId": { "type": "string" },
+        "brokerName": { "type": "string" },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "type": { "type": "string" },
+              "url": { "type": "string" },
+              "uploadedAt": { "type": "string" }
+            }
+          }
+        },
+        "statusHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string" },
+              "timestamp": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["id", "name", "cpf", "status"]
+    }
+  },
+  "firestore": {
+    "/brokers/{brokerId}": {
+      "schema": "Broker",
+      "description": "Collection of brokers"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Collection of customers for credit analysis"
+    }
+  }
+}

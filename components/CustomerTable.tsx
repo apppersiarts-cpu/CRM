@@ -4,7 +4,7 @@ import React from 'react';
 import { Customer, CreditStatus } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreHorizontal, FileText, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, FileText, ExternalLink, Brain } from 'lucide-react';
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -96,9 +96,17 @@ export function CustomerTable({ customers, onEdit }: CustomerTableProps) {
                 </p>
               </td>
               <td className="px-6 py-4">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${getStatusColor(customer.status)}`}>
-                  {customer.status}
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(customer.status)}`}>
+                    {customer.status}
+                  </span>
+                  {customer.status === CreditStatus.EM_ANALISE && (
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-indigo-600 uppercase tracking-tighter animate-pulse">
+                      <Brain size={10} />
+                      IA Pronta
+                    </div>
+                  )}
+                </div>
               </td>
               <td className="px-6 py-4">
                 <p className="text-sm text-gray-700">{format(new Date(customer.createdAt), 'dd/MM/yyyy')}</p>

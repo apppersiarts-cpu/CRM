@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: brokers
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required)
+    //   - email: string (required, email format)
+    //   - phone: string
+    //   - company: string
+    //   - status: string (active/inactive)
+    //   - createdAt: string (ISO date)
+    //
+    // Collection: customers
+    // Fields:
+    //   - id: string (required)
+    //   - name: string (required)
+    //   - cpf: string (required)
+    //   - income: number
+    //   - project: string
+    //   - unit: string
+    //   - propertyValue: number
+    //   - financedValue: number
+    //   - status: string (required)
+    //   - brokerId: string
+    //   - brokerName: string
+    //   - documents: list of objects
+    //   - statusHistory: list of objects
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "app.persi.arts@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidBroker(data) {
+      return data.keys().hasAll(['id', 'name', 'email']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email);
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['id', 'name', 'cpf', 'status']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.cpf is string && data.cpf.size() >= 11 &&
+             data.status is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /brokers/{brokerId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidBroker(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      // Brokers can read all customers or just their own? 
+      // Usually in CRM, brokers see their own, admins see all.
+      // For now, let's allow authenticated users to read (common in small teams)
+      // but restrict writes.
+      allow read: if isAuthenticated();
+      
+      allow create: if isAuthenticated() && isValidCustomer(request.resource.data) && 
+                    (isAdmin() || request.resource.data.brokerId == request.auth.uid);
+                    
+      allow update: if isAuthenticated() && isValidCustomer(request.resource.data) && 
+                    (isAdmin() || resource.data.brokerId == request.auth.uid);
+                    
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

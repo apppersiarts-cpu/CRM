@@ -14,7 +14,8 @@ import {
   AlertCircle,
   TrendingUp,
   DollarSign,
-  Filter
+  Filter,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, differenceInDays } from 'date-fns';
@@ -38,6 +39,7 @@ import { KanbanBoard } from '@/components/KanbanBoard';
 import { CustomerTable } from '@/components/CustomerTable';
 import { DashboardStats } from '@/components/DashboardStats';
 import { BrokerManagement } from '@/components/BrokerManagement';
+import { SettingsPanel } from '@/components/SettingsPanel';
 import { LogOut, LogIn, ShieldCheck } from 'lucide-react';
 
 interface User {
@@ -59,7 +61,7 @@ export default function CRMPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
-  const [view, setView] = useState<'dashboard' | 'table' | 'kanban' | 'brokers'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'table' | 'kanban' | 'brokers' | 'settings'>('dashboard');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -425,6 +427,14 @@ export default function CRMPage() {
               Gestão de Corretores
             </button>
           )}
+
+          <button 
+            onClick={() => setView('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'settings' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            <SettingsIcon size={20} />
+            Configurações
+          </button>
         </nav>
 
         <div className="p-4 border-t border-gray-100 space-y-3">
@@ -465,10 +475,11 @@ export default function CRMPage() {
             {view === 'table' && 'Lista de Clientes'}
             {view === 'kanban' && 'Fluxo de Aprovação'}
             {view === 'brokers' && 'Gestão de Corretores'}
+            {view === 'settings' && 'Configurações'}
           </h1>
 
           <div className="flex items-center gap-4">
-            {view !== 'brokers' && (
+            {view !== 'brokers' && view !== 'settings' && (
               <>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -568,6 +579,17 @@ export default function CRMPage() {
                   onDelete={handleDeleteBroker}
                   onResetPassword={handleResetPassword}
                 />
+              </motion.div>
+            )}
+
+            {view === 'settings' && (
+              <motion.div 
+                key="settings"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <SettingsPanel userRole={currentUser.role} />
               </motion.div>
             )}
           </AnimatePresence>

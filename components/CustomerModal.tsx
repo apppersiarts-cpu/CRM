@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Upload, File, Trash2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Upload, File, Trash2, CheckCircle, AlertCircle, Loader2, Brain, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useDropzone } from 'react-dropzone';
 import { Customer, CreditStatus, Document, Broker } from '@/lib/types';
+import { AIAnalysis } from './AIAnalysis';
 
 interface CustomerModalProps {
   isOpen: boolean;
@@ -34,17 +35,44 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
     };
   });
 
-  const [activeTab, setActiveTab] = useState<'info' | 'docs'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'ai'>('info');
   const [configMissing, setConfigMissing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's' && isOpen) {
+        e.preventDefault();
+        const form = document.getElementById('customer-form') as HTMLFormElement;
+        if (form) form.requestSubmit();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   useEffect(() => {
     // Verifica se a rota de upload está configurada (opcionalmente)
     // Por enquanto, vamos apenas monitorar erros de upload
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    setIsSaving(true);
+    try {
+      await onSave(formData);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        onClose();
+      }, 800);
+    } catch (error) {
+      console.error('Error saving:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
@@ -128,6 +156,13 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
             className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'docs' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Documentação ({formData.documents?.length || 0})
+          </button>
+          <button 
+            onClick={() => setActiveTab('ai')}
+            className={`flex-1 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'ai' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'} flex items-center justify-center gap-2`}
+          >
+            <Brain size={16} />
+            Análise IA
           </button>
         </div>
 
@@ -281,7 +316,7 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                 )}
               </div>
             </form>
-          ) : (
+          ) : activeTab === 'docs' ? (
             <div className="space-y-6">
               {/* Checklist de Documentos Obrigatórios */}
               <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
@@ -399,6 +434,8 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                 )}
               </div>
             </div>
+          ) : (
+            <AIAnalysis customer={formData} />
           )}
         </div>
 
@@ -417,9 +454,21 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
             <button 
               form="customer-form"
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 rounded-lg transition-all shadow-sm shadow-indigo-200"
+              disabled={isSaving}
+              className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center gap-2 min-w-[160px] justify-center ${
+                saveSuccess 
+                  ? 'bg-emerald-500 text-white shadow-emerald-100' 
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-100 active:scale-95'
+              } ${isSaving ? 'opacity-80 cursor-not-allowed' : ''}`}
             >
-              {customer ? 'Salvar Alterações' : 'Criar Cadastro'}
+              {isSaving ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : saveSuccess ? (
+                <CheckCircle size={18} />
+              ) : (
+                <Save size={18} />
+              )}
+              {isSaving ? 'Salvando...' : saveSuccess ? 'Sucesso!' : customer ? 'Salvar Alterações' : 'Criar Cadastro'}
             </button>
           </div>
         </div>

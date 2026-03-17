@@ -7,7 +7,7 @@ import {
   STATUS_ORDER 
 } from '@/lib/types';
 import { motion } from 'motion/react';
-import { MoreVertical, Clock, FileText, User } from 'lucide-react';
+import { MoreVertical, Clock, FileText, User, Brain } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -44,7 +44,17 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit }: KanbanBoardPr
                 className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:border-indigo-400 hover:shadow-md transition-all cursor-pointer group"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">{customer.name}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-bold text-gray-900 text-sm group-hover:text-indigo-600 transition-colors">{customer.name}</h4>
+                    {customer.status === CreditStatus.EM_ANALISE && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[8px] font-bold uppercase tracking-wider border border-indigo-100 animate-pulse">
+                          <Brain size={10} />
+                          Análise IA Disponível
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <button className="text-gray-400 hover:text-gray-600">
                     <MoreVertical size={16} />
                   </button>

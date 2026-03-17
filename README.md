@@ -1,20 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# CrediFlow CRM - Gestão de Crédito Imobiliário
 
-# Run and deploy your AI Studio app
+Plataforma avançada para gestão de processos de crédito imobiliário, integrando corretores, analistas e inteligência artificial para agilizar a aprovação de financiamentos.
 
-This contains everything you need to run your app locally.
+## 🚀 Funcionalidades Principais
 
-View your app in AI Studio: https://ai.studio/apps/2669fd04-a5e4-48ca-b292-922cb53f239d
+- **Dashboard Executivo:** Visualização em tempo real de métricas, conversão e volume financeiro.
+- **Fluxo Kanban:** Gestão visual do status de cada cliente, desde o cadastro até a assinatura do contrato.
+- **Análise de Crédito com IA:** Integração com Google Gemini para análise instantânea de perfil, cálculo de LTV/DTI e recomendações técnicas.
+- **Gestão de Documentos:** Upload e organização de documentos obrigatórios (RG, CPF, Renda, etc) via Vercel Blob.
+- **Painel de Configurações:** Controle de permissões baseado em perfis (Admin, Analista, Corretor).
+- **Interface Responsiva:** Design moderno e fluido utilizando Tailwind CSS e Framer Motion.
 
-## Run Locally
+## 🛠️ Tecnologias Utilizadas
 
-**Prerequisites:**  Node.js
+- **Framework:** Next.js 15+ (App Router)
+- **Linguagem:** TypeScript
+- **Estilização:** Tailwind CSS
+- **Animações:** Framer Motion (motion/react)
+- **IA:** Google Gemini API (@google/genai)
+- **Ícones:** Lucide React
+- **Armazenamento:** Vercel Blob
 
+## ⚙️ Configuração Necessária
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Para o funcionamento pleno da plataforma, as seguintes variáveis de ambiente devem ser configuradas:
+
+```env
+# Gemini API Key (Para Análise de Crédito)
+NEXT_PUBLIC_GEMINI_API_KEY=seu_token_aqui
+
+# Vercel Blob (Para Upload de Documentos)
+BLOB_READ_WRITE_TOKEN=seu_token_aqui
+```
+
+## 👥 Perfis de Acesso
+
+- **Administrador:** Acesso total ao sistema, configurações globais e gestão de usuários.
+- **Analista:** Foco na análise técnica, revisão de documentos e pareceres de IA.
+- **Corretor:** Cadastro de novos clientes e acompanhamento do status de suas vendas.
+
+---
+Desenvolvido no **Google AI Studio Build**.
