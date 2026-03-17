@@ -19,15 +19,16 @@ export async function POST(request: Request) {
   }
   try {
     const body = await request.json();
-    const { id, name, role, password } = body;
+    const { id, name, role, password, status } = body;
 
     await sql`
-      INSERT INTO staff (id, name, role, password)
-      VALUES (${id}, ${name}, ${role}, ${password})
+      INSERT INTO staff (id, name, role, password, status)
+      VALUES (${id}, ${name}, ${role}, ${password}, ${status || 'active'})
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         role = EXCLUDED.role,
-        password = EXCLUDED.password
+        password = EXCLUDED.password,
+        status = EXCLUDED.status
     `;
 
     return NextResponse.json({ message: 'Staff saved successfully' });

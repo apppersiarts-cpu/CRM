@@ -84,9 +84,17 @@ export async function GET() {
         name TEXT NOT NULL,
         role TEXT NOT NULL,
         password TEXT DEFAULT '123',
+        status TEXT DEFAULT 'active',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
+
+    // Add status column if it doesn't exist
+    try {
+      await sql`ALTER TABLE staff ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'`;
+    } catch (e) {
+      console.log('Staff status column might already exist');
+    }
 
     // Seed initial admin if not exists
     await sql`

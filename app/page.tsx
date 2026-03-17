@@ -47,6 +47,7 @@ interface User {
   name: string;
   role: UserRole;
   password?: string;
+  status?: 'active' | 'inactive';
 }
 
 export default function CRMPage() {
@@ -114,14 +115,16 @@ export default function CRMPage() {
       id: b.id,
       name: b.name,
       role: 'broker' as UserRole,
-      password: b.password || '123'
+      password: b.password || '123',
+      status: b.status
     }));
 
     const dynamicStaff = staff.map(s => ({
       id: s.id,
       name: s.name,
       role: s.role,
-      password: s.password || '123'
+      password: s.password || '123',
+      status: s.status
     }));
 
     return [...dynamicStaff, ...dynamicBrokers];
@@ -152,6 +155,15 @@ export default function CRMPage() {
       unit: data.unit!,
       propertyValue: data.propertyValue!,
       financedValue: data.financedValue!,
+      federalSubsidy: data.federalSubsidy ?? 0,
+      stateSubsidy: data.stateSubsidy ?? 0,
+      fgts: data.fgts ?? 0,
+      financingMode: data.financingMode ?? 'associativo',
+      hasSecondProponent: data.hasSecondProponent ?? false,
+      secondProponentName: data.secondProponentName,
+      secondProponentCpf: data.secondProponentCpf,
+      secondProponentIncome: data.secondProponentIncome,
+      possibleInstallment: data.possibleInstallment ?? 0,
       status: CreditStatus.NOVO_CADASTRO,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -309,6 +321,10 @@ export default function CRMPage() {
     e.preventDefault();
     const user = allUsers.find(u => u.name.toLowerCase() === username.toLowerCase());
     if (user && password === (user.password || '123')) {
+      if (user.status === 'inactive') {
+        alert('Este usuário está inativo. Entre em contato com o administrador.');
+        return;
+      }
       setCurrentUser(user);
       setLoginError(false);
     } else {
@@ -581,7 +597,7 @@ export default function CRMPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <SettingsPanel userRole={currentUser.role} />
+                <SettingsPanel userRole={currentUser.role} currentUserId={currentUser.id} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -597,7 +613,13 @@ export default function CRMPage() {
           brokerId: currentUser.id, 
           brokerName: currentUser.name,
           status: CreditStatus.NOVO_CADASTRO,
-          documents: []
+          documents: [],
+          federalSubsidy: 0,
+          stateSubsidy: 0,
+          fgts: 0,
+          financingMode: 'associativo',
+          hasSecondProponent: false,
+          possibleInstallment: 0
         } as any : undefined)}
         brokers={brokers}
         canChangeBroker={currentUser.role === 'admin' || currentUser.role === 'analyst'}

@@ -28,21 +28,24 @@ interface StaffUser {
   name: string;
   role: UserRole;
   password?: string;
+  status: 'active' | 'inactive';
   created_at?: string;
 }
 
 interface SettingsPanelProps {
   userRole: UserRole;
+  currentUserId: string;
 }
 
-export function SettingsPanel({ userRole }: SettingsPanelProps) {
+export function SettingsPanel({ userRole, currentUserId }: SettingsPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [stageLabels, setStageLabels] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
-  const [newStaff, setNewStaff] = useState<Partial<StaffUser>>({ role: 'analyst' });
+  const [editingStaff, setEditingStaff] = useState<StaffUser | null>(null);
+  const [newStaff, setNewStaff] = useState<Partial<StaffUser>>({ role: 'analyst', status: 'active' });
 
   const isAdmin = userRole === 'admin';
   const isAnalyst = userRole === 'analyst';
@@ -83,33 +86,49 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
   }, []);
 
   const handleAddStaff = async () => {
-    if (!newStaff.name || !newStaff.password) {
+    if (!newStaff.name || (!editingStaff && !newStaff.password)) {
       alert('Preencha nome e senha.');
       return;
     }
 
-    const staffToAdd = {
+    const staffToSave = {
       ...newStaff,
-      id: Math.random().toString(36).substr(2, 9)
+      id: editingStaff ? editingStaff.id : Math.random().toString(36).substr(2, 9)
     } as StaffUser;
 
     try {
       const res = await fetch('/api/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(staffToAdd)
+        body: JSON.stringify(staffToSave)
       });
 
       if (res.ok) {
-        setStaff([staffToAdd, ...staff]);
+        if (editingStaff) {
+          setStaff(staff.map(s => s.id === editingStaff.id ? staffToSave : s));
+        } else {
+          setStaff([staffToSave, ...staff]);
+        }
         setIsAddingStaff(false);
-        setNewStaff({ role: 'analyst' });
+        setEditingStaff(null);
+        setNewStaff({ role: 'analyst', status: 'active' });
         // Reload to update global user list (for login)
         setTimeout(() => window.location.reload(), 1500);
       }
     } catch (error) {
-      console.error('Failed to add staff:', error);
+      console.error('Failed to save staff:', error);
     }
+  };
+
+  const handleEditStaff = (member: StaffUser) => {
+    setEditingStaff(member);
+    setNewStaff({
+      name: member.name,
+      role: member.role,
+      password: member.password,
+      status: member.status
+    });
+    setIsAddingStaff(true);
   };
 
   const handleDeleteStaff = async (id: string) => {
@@ -312,7 +331,11 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
                   <h3 className="font-bold text-gray-900">Gestão de Equipe (Analistas e ADMs)</h3>
                 </div>
                 <button 
-                  onClick={() => setIsAddingStaff(true)}
+                  onClick={() => {
+                    setEditingStaff(null);
+                    setNewStaff({ role: 'analyst', status: 'active' });
+                    setIsAddingStaff(true);
+                  }}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all"
                 >
                   <Plus size={14} />
@@ -328,15 +351,18 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4 mb-6">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 mb-6 shadow-inner">
+                      <h4 className="text-sm font-bold text-gray-900 mb-2">
+                        {editingStaff ? 'Editar Membro da Equipe' : 'Cadastrar Novo Membro'}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nome Completo</label>
                           <input 
                             type="text"
                             value={newStaff.name || ''}
                             onChange={e => setNewStaff({...newStaff, name: e.target.value})}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                             placeholder="Ex: João Silva"
                           />
                         </div>
@@ -346,34 +372,58 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
                             type="password"
                             value={newStaff.password || ''}
                             onChange={e => setNewStaff({...newStaff, password: e.target.value})}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                            placeholder="Mínimo 3 caracteres"
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+                            placeholder={editingStaff ? "Deixe em branco para manter" : "Mínimo 3 caracteres"}
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nível de Acesso</label>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status</label>
                           <select 
-                            value={newStaff.role}
-                            onChange={e => setNewStaff({...newStaff, role: e.target.value as UserRole})}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            value={newStaff.status || 'active'}
+                            onChange={e => setNewStaff({...newStaff, status: e.target.value as any})}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
                           >
-                            <option value="analyst">Analista (Correspondente)</option>
-                            <option value="admin">Administrador</option>
+                            <option value="active">Ativo</option>
+                            <option value="inactive">Inativo</option>
                           </select>
                         </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nível de Acesso</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setNewStaff({...newStaff, role: 'analyst'})}
+                              className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${newStaff.role === 'analyst' ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                            >
+                              <User size={16} />
+                              Analista
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewStaff({...newStaff, role: 'admin'})}
+                              className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${newStaff.role === 'admin' ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                            >
+                              <ShieldCheck size={16} />
+                              Administrador
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-end gap-2 pt-2">
+                      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200/50">
                         <button 
-                          onClick={() => setIsAddingStaff(false)}
+                          onClick={() => {
+                            setIsAddingStaff(false);
+                            setEditingStaff(null);
+                          }}
                           className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-200 rounded-lg transition-all"
                         >
                           Cancelar
                         </button>
                         <button 
                           onClick={handleAddStaff}
-                          className="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                          className="px-6 py-2 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                         >
-                          Criar Usuário
+                          {editingStaff ? 'Salvar Alterações' : 'Criar Usuário'}
                         </button>
                       </div>
                     </div>
@@ -383,33 +433,50 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
 
               <div className="space-y-3">
                 {staff.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group hover:border-indigo-200 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                  <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:border-indigo-200 hover:bg-white hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm ${
                         member.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
                       }`}>
                         {member.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{member.name}</p>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                        <p className={`text-sm font-bold ${member.status === 'inactive' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                          {member.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                             member.role === 'admin' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'
                           }`}>
                             {member.role === 'admin' ? 'Administrador' : 'Analista'}
                           </span>
-                          <span className="text-[10px] text-gray-400">ID: {member.id}</span>
+                          {member.status === 'inactive' && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-50 text-red-600">
+                              Inativo
+                            </span>
+                          )}
+                          <span className="text-[10px] text-gray-400 font-mono">ID: {member.id}</span>
                         </div>
                       </div>
                     </div>
-                    {member.id !== '1' && ( // Don't allow deleting the main admin
+                    <div className="flex items-center gap-1">
                       <button 
-                        onClick={() => handleDeleteStaff(member.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        onClick={() => handleEditStaff(member)}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        title="Editar"
                       >
-                        <Trash2 size={16} />
+                        <Edit2 size={16} />
                       </button>
-                    )}
+                      {member.id !== currentUserId && ( // Don't allow deleting yourself to prevent lockout
+                        <button 
+                          onClick={() => handleDeleteStaff(member.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
