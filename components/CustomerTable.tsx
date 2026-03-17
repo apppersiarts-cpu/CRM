@@ -9,9 +9,14 @@ import { MoreHorizontal, FileText, ExternalLink, Brain } from 'lucide-react';
 interface CustomerTableProps {
   customers: Customer[];
   onEdit: (customer: Customer) => void;
+  stageLabels?: Record<string, string>;
 }
 
-export function CustomerTable({ customers, onEdit }: CustomerTableProps) {
+export function CustomerTable({ customers, onEdit, stageLabels }: CustomerTableProps) {
+  const getStatusLabel = (status: CreditStatus) => {
+    return stageLabels?.[status] || status;
+  };
+
   const getStatusColor = (status: CreditStatus) => {
     switch (status) {
       case CreditStatus.APROVADO: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
@@ -98,7 +103,7 @@ export function CustomerTable({ customers, onEdit }: CustomerTableProps) {
               <td className="px-6 py-4">
                 <div className="flex flex-col gap-1">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold border w-fit ${getStatusColor(customer.status)}`}>
-                    {customer.status}
+                    {getStatusLabel(customer.status)}
                   </span>
                   {customer.status === CreditStatus.EM_ANALISE && (
                     <div className="flex items-center gap-1 text-[9px] font-bold text-indigo-600 uppercase tracking-tighter animate-pulse">

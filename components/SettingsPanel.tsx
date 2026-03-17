@@ -11,10 +11,25 @@ import {
   Save, 
   CheckCircle2,
   AlertCircle,
-  UserCog
+  UserCog,
+  ListTodo,
+  Edit2,
+  Plus,
+  Trash2,
+  UserPlus,
+  ShieldCheck,
+  User
 } from 'lucide-react';
-import { motion } from 'motion/react';
-import { UserRole } from '@/lib/types';
+import { motion, AnimatePresence } from 'motion/react';
+import { UserRole, CreditStatus, STATUS_ORDER } from '@/lib/types';
+
+interface StaffUser {
+  id: string;
+  name: string;
+  role: UserRole;
+  password?: string;
+  created_at?: string;
+}
 
 interface SettingsPanelProps {
   userRole: UserRole;
@@ -23,17 +38,113 @@ interface SettingsPanelProps {
 export function SettingsPanel({ userRole }: SettingsPanelProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [stageLabels, setStageLabels] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [staff, setStaff] = useState<StaffUser[]>([]);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
+  const [newStaff, setNewStaff] = useState<Partial<StaffUser>>({ role: 'analyst' });
 
   const isAdmin = userRole === 'admin';
   const isAnalyst = userRole === 'analyst';
 
-  const handleSave = () => {
+  // Load settings and staff
+  React.useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [settingsRes, staffRes] = await Promise.all([
+          fetch('/api/settings'),
+          fetch('/api/staff')
+        ]);
+
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          if (data.stageLabels) {
+            setStageLabels(data.stageLabels);
+          } else {
+            const initial: Record<string, string> = {};
+            STATUS_ORDER.forEach(status => {
+              initial[status] = status;
+            });
+            setStageLabels(initial);
+          }
+        }
+
+        if (staffRes.ok) {
+          const staffData = await staffRes.json();
+          setStaff(staffData);
+        }
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleAddStaff = async () => {
+    if (!newStaff.name || !newStaff.password) {
+      alert('Preencha nome e senha.');
+      return;
+    }
+
+    const staffToAdd = {
+      ...newStaff,
+      id: Math.random().toString(36).substr(2, 9)
+    } as StaffUser;
+
+    try {
+      const res = await fetch('/api/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(staffToAdd)
+      });
+
+      if (res.ok) {
+        setStaff([staffToAdd, ...staff]);
+        setIsAddingStaff(false);
+        setNewStaff({ role: 'analyst' });
+        // Reload to update global user list (for login)
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (error) {
+      console.error('Failed to add staff:', error);
+    }
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    if (confirm('Deseja realmente excluir este membro da equipe?')) {
+      try {
+        const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          setStaff(staff.filter(s => s.id !== id));
+          // Reload to update global user list
+          setTimeout(() => window.location.reload(), 1500);
+        }
+      } catch (error) {
+        console.error('Failed to delete staff:', error);
+      }
+    }
+  };
+
+  const handleSave = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'stageLabels', value: stageLabels })
+      });
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1000);
+      // Reload page to apply changes everywhere (simplest way for now)
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Erro ao salvar configurações.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -150,6 +261,160 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
               </div>
             </div>
           </section>
+
+          {/* Custom Stages (Processo de Crédito) */}
+          {isAdmin && (
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-gray-50">
+                <ListTodo className="text-indigo-600" size={20} />
+                <h3 className="font-bold text-gray-900">Personalização das Etapas</h3>
+              </div>
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500 mb-4">
+                  Altere os nomes das etapas do processo de crédito. Essas alterações serão aplicadas em todo o sistema (Kanban, Tabelas e Filtros).
+                </p>
+                
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-6 h-6 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {STATUS_ORDER.map((status) => (
+                      <div key={status} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-focus-within:text-indigo-600 group-focus-within:border-indigo-200 transition-all">
+                          <Edit2 size={14} />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Etapa Original: {status}</label>
+                          <input 
+                            type="text"
+                            value={stageLabels[status] || status}
+                            onChange={(e) => setStageLabels({ ...stageLabels, [status]: e.target.value })}
+                            className="w-full bg-transparent border-none p-0 text-sm font-bold text-gray-900 focus:ring-0 outline-none"
+                            placeholder={`Nome para ${status}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Staff Management */}
+          {isAdmin && (
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-50">
+                <div className="flex items-center gap-2">
+                  <UserCog className="text-indigo-600" size={20} />
+                  <h3 className="font-bold text-gray-900">Gestão de Equipe (Analistas e ADMs)</h3>
+                </div>
+                <button 
+                  onClick={() => setIsAddingStaff(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all"
+                >
+                  <Plus size={14} />
+                  Novo Membro
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {isAddingStaff && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4 mb-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nome Completo</label>
+                          <input 
+                            type="text"
+                            value={newStaff.name || ''}
+                            onChange={e => setNewStaff({...newStaff, name: e.target.value})}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            placeholder="Ex: João Silva"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Senha de Acesso</label>
+                          <input 
+                            type="password"
+                            value={newStaff.password || ''}
+                            onChange={e => setNewStaff({...newStaff, password: e.target.value})}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            placeholder="Mínimo 3 caracteres"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nível de Acesso</label>
+                          <select 
+                            value={newStaff.role}
+                            onChange={e => setNewStaff({...newStaff, role: e.target.value as UserRole})}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                          >
+                            <option value="analyst">Analista (Correspondente)</option>
+                            <option value="admin">Administrador</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button 
+                          onClick={() => setIsAddingStaff(false)}
+                          className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-200 rounded-lg transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          onClick={handleAddStaff}
+                          className="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                        >
+                          Criar Usuário
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="space-y-3">
+                {staff.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group hover:border-indigo-200 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                        member.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {member.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{member.name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                            member.role === 'admin' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'
+                          }`}>
+                            {member.role === 'admin' ? 'Administrador' : 'Analista'}
+                          </span>
+                          <span className="text-[10px] text-gray-400">ID: {member.id}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {member.id !== '1' && ( // Don't allow deleting the main admin
+                      <button 
+                        onClick={() => handleDeleteStaff(member.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {!isAdmin && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-3">

@@ -11,12 +11,23 @@ interface CustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: Partial<Customer>) => void;
+  onDelete?: (id: string) => void;
   customer?: Customer;
   brokers?: Broker[];
   canChangeBroker?: boolean;
+  stageLabels?: Record<string, string>;
 }
 
-export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [], canChangeBroker = false }: CustomerModalProps) {
+export function CustomerModal({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  onDelete,
+  customer, 
+  brokers = [], 
+  canChangeBroker = false,
+  stageLabels
+}: CustomerModalProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<Partial<Customer>>(() => {
     if (customer) return customer;
@@ -286,7 +297,7 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                     className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
                   >
                     {STATUS_ORDER.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{stageLabels?.[s] || s}</option>
                     ))}
                   </select>
                 </div>
@@ -449,7 +460,10 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                 )}
               </div>
               
-              <div className="pt-4 border-t border-gray-100 flex justify-end">
+              <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+                <p className="text-[10px] text-gray-400 font-medium italic">
+                  * Documentos anexados são salvos automaticamente ao clicar em &quot;Salvar Documentação&quot;
+                </p>
                 <button 
                   type="submit"
                   disabled={isSaving}
@@ -473,6 +487,15 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
             <span>Campos com * são obrigatórios</span>
           </div>
           <div className="flex items-center gap-3">
+            {customer && onDelete && (
+              <button 
+                onClick={() => onDelete(customer.id)}
+                className="px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center gap-2 mr-4"
+              >
+                <Trash2 size={16} />
+                Excluir Cliente
+              </button>
+            )}
             <button 
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition-all"

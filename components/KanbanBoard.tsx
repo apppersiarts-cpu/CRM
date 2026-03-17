@@ -15,9 +15,14 @@ interface KanbanBoardProps {
   customers: Customer[];
   onUpdateStatus: (id: string, updates: Partial<Customer>) => void;
   onEdit: (customer: Customer) => void;
+  stageLabels?: Record<string, string>;
 }
 
-export function KanbanBoard({ customers, onUpdateStatus, onEdit }: KanbanBoardProps) {
+export function KanbanBoard({ customers, onUpdateStatus, onEdit, stageLabels }: KanbanBoardProps) {
+  const getStatusLabel = (status: CreditStatus) => {
+    return stageLabels?.[status] || status;
+  };
+
   const getCustomersByStatus = (status: CreditStatus) => {
     return customers.filter(c => c.status === status);
   };
@@ -28,7 +33,7 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit }: KanbanBoardPr
         <div key={status} className="w-80 flex flex-col shrink-0">
           <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{status}</h3>
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">{getStatusLabel(status)}</h3>
               <span className="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {getCustomersByStatus(status).length}
               </span>
@@ -106,7 +111,7 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit }: KanbanBoardPr
                         className="appearance-none bg-gray-50 border border-gray-200 text-[10px] font-bold text-gray-600 py-1 pl-2 pr-6 rounded-lg cursor-pointer hover:bg-white hover:border-indigo-300 transition-all outline-none"
                       >
                         {STATUS_ORDER.map(s => (
-                          <option key={s} value={s}>{s}</option>
+                          <option key={s} value={s}>{getStatusLabel(s)}</option>
                         ))}
                       </select>
                       <ArrowRightLeft size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />

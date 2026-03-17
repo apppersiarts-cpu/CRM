@@ -49,13 +49,6 @@ interface User {
   password?: string;
 }
 
-const USERS: User[] = [
-  { id: '1', name: 'Leonardo Morana', role: 'admin', password: '123' },
-  { id: '2', name: 'Corretor João', role: 'broker', password: '123' },
-  { id: '3', name: 'Corretora Maria', role: 'broker', password: '123' },
-  { id: '4', name: 'Analista Júnior', role: 'analyst', password: '123' }
-];
-
 export default function CRMPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [username, setUsername] = useState('');
@@ -64,6 +57,8 @@ export default function CRMPage() {
   const [view, setView] = useState<'dashboard' | 'table' | 'kanban' | 'brokers' | 'settings'>('dashboard');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [brokers, setBrokers] = useState<Broker[]>([]);
+  const [staff, setStaff] = useState<User[]>([]);
+  const [settings, setSettings] = useState<any>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,9 +72,11 @@ export default function CRMPage() {
         await fetch('/api/db/setup');
         
         // Load data
-        const [customersRes, brokersRes] = await Promise.all([
+        const [customersRes, brokersRes, settingsRes, staffRes] = await Promise.all([
           fetch('/api/customers'),
-          fetch('/api/brokers')
+          fetch('/api/brokers'),
+          fetch('/api/settings'),
+          fetch('/api/staff')
         ]);
 
         if (customersRes.ok) {
@@ -91,6 +88,16 @@ export default function CRMPage() {
           const brokersData = await brokersRes.json();
           setBrokers(brokersData);
         }
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          setSettings(settingsData);
+        }
+
+        if (staffRes.ok) {
+          const staffData = await staffRes.json();
+          setStaff(staffData);
+        }
       } catch (error) {
         console.error('Failed to load data from database:', error);
       } finally {
@@ -101,7 +108,7 @@ export default function CRMPage() {
     initDb();
   }, []);
 
-  // Update USERS list with brokers from database
+  // Update USERS list with brokers and staff from database
   const allUsers = useMemo(() => {
     const dynamicBrokers = brokers.map(b => ({
       id: b.id,
@@ -110,10 +117,15 @@ export default function CRMPage() {
       password: b.password || '123'
     }));
 
-    // Filter out duplicates if any
-    const baseUsers = USERS.filter(u => u.role !== 'broker');
-    return [...baseUsers, ...dynamicBrokers];
-  }, [brokers]);
+    const dynamicStaff = staff.map(s => ({
+      id: s.id,
+      name: s.name,
+      role: s.role,
+      password: s.password || '123'
+    }));
+
+    return [...dynamicStaff, ...dynamicBrokers];
+  }, [brokers, staff]);
 
   const filteredCustomers = useMemo(() => {
     let list = customers;
@@ -193,6 +205,20 @@ export default function CRMPage() {
     } catch (error) {
       console.error('Failed to update customer:', error);
       alert('Erro ao atualizar cliente no banco de dados.');
+    }
+  };
+
+  const handleDeleteCustomer = async (id: string) => {
+    if (window.confirm('Deseja realmente excluir este cliente?')) {
+      try {
+        await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+        setCustomers(prev => prev.filter(c => c.id !== id));
+        setIsModalOpen(false);
+        setSelectedCustomer(null);
+      } catch (error) {
+        console.error('Failed to delete customer:', error);
+        alert('Erro ao excluir cliente do banco de dados.');
+      }
     }
   };
 
@@ -502,6 +528,7 @@ export default function CRMPage() {
               >
                 <CustomerTable 
                   customers={filteredCustomers} 
+                  stageLabels={settings.stageLabels}
                   onEdit={(c) => {
                     setSelectedCustomer(c);
                     setIsModalOpen(true);
@@ -520,6 +547,7 @@ export default function CRMPage() {
               >
                 <KanbanBoard 
                   customers={filteredCustomers} 
+                  stageLabels={settings.stageLabels}
                   onUpdateStatus={handleUpdateCustomer}
                   onEdit={(c) => {
                     setSelectedCustomer(c);
@@ -573,6 +601,8 @@ export default function CRMPage() {
         } as any : undefined)}
         brokers={brokers}
         canChangeBroker={currentUser.role === 'admin' || currentUser.role === 'analyst'}
+        stageLabels={settings.stageLabels}
+        onDelete={currentUser.role === 'admin' ? handleDeleteCustomer : undefined}
       />
     </div>
   );

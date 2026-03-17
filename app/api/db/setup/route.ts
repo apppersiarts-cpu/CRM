@@ -45,6 +45,32 @@ export async function GET() {
       );
     `;
 
+    // Create settings table
+    await sql`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value JSONB NOT NULL
+      );
+    `;
+
+    // Create staff table
+    await sql`
+      CREATE TABLE IF NOT EXISTS staff (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        password TEXT DEFAULT '123',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Seed initial admin if not exists
+    await sql`
+      INSERT INTO staff (id, name, role, password)
+      VALUES ('1', 'Leonardo Morana', 'admin', '123')
+      ON CONFLICT (id) DO NOTHING;
+    `;
+
     return NextResponse.json({ message: 'Database tables created successfully' });
   } catch (error: any) {
     console.error('Database setup error:', error);
