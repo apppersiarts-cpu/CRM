@@ -420,7 +420,6 @@ export default function CRMPage() {
           <button 
             onClick={() => {
               setCurrentUser(null);
-              setSelectedUser(null);
               setPassword('');
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg text-xs font-bold transition-all"

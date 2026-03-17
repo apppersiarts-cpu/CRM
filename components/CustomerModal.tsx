@@ -166,9 +166,9 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'info' ? (
-            <form id="customer-form" onSubmit={handleSubmit} className="space-y-6">
+        <form id="customer-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+          <div className={activeTab === 'info' ? 'block' : 'hidden'}>
+            <div className="space-y-6">
               {/* Aviso de Configuração do Blob */}
               {configMissing && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 mb-4">
@@ -328,8 +328,10 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                   </div>
                 )}
               </div>
-            </form>
-          ) : activeTab === 'docs' ? (
+            </div>
+          </div>
+
+          <div className={activeTab === 'docs' ? 'block' : 'hidden'}>
             <div className="space-y-6">
               {/* Checklist de Documentos Obrigatórios */}
               <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
@@ -446,11 +448,24 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
                   </div>
                 )}
               </div>
+              
+              <div className="pt-4 border-t border-gray-100 flex justify-end">
+                <button 
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-md shadow-indigo-100"
+                >
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  Salvar Documentação
+                </button>
+              </div>
             </div>
-          ) : (
+          </div>
+
+          <div className={activeTab === 'ai' ? 'block' : 'hidden'}>
             <AIAnalysis customer={formData} />
-          )}
-        </div>
+          </div>
+        </form>
 
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -481,7 +496,7 @@ export function CustomerModal({ isOpen, onClose, onSave, customer, brokers = [],
               ) : (
                 <Save size={18} />
               )}
-              {isSaving ? 'Salvando...' : saveSuccess ? 'Sucesso!' : customer ? 'Salvar Alterações' : 'Criar Cadastro'}
+              {isSaving ? 'Salvando...' : saveSuccess ? 'Sucesso!' : activeTab === 'docs' ? 'Salvar Documentação' : customer ? 'Salvar Alterações' : 'Criar Cadastro'}
             </button>
           </div>
         </div>
