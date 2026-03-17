@@ -58,7 +58,7 @@ const USERS: User[] = [
 
 export default function CRMPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState(false);
   const [view, setView] = useState<'dashboard' | 'table' | 'kanban' | 'brokers' | 'settings'>('dashboard');
@@ -281,8 +281,9 @@ export default function CRMPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUser && password === (selectedUser.password || '123')) {
-      setCurrentUser(selectedUser);
+    const user = allUsers.find(u => u.name.toLowerCase() === username.toLowerCase());
+    if (user && password === (user.password || '123')) {
+      setCurrentUser(user);
       setLoginError(false);
     } else {
       setLoginError(true);
@@ -302,81 +303,45 @@ export default function CRMPage() {
               <ShieldCheck size={32} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">CrediFlow CRM</h1>
-            <p className="text-gray-500 mt-2">
-              {selectedUser ? `Bem-vindo, ${selectedUser.name}` : 'Selecione um perfil para acessar'}
-            </p>
+            <p className="text-gray-500 mt-2">Acesse sua conta para continuar</p>
           </div>
 
-          {!selectedUser ? (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {isLoading ? (
-                <div className="py-8 text-center">
-                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Carregando...</p>
-                </div>
-              ) : (
-                allUsers.map(user => (
-                  <button
-                    key={user.id}
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setLoginError(false);
-                      setPassword('');
-                    }}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-indigo-50 border border-gray-100 hover:border-indigo-200 rounded-2xl transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 font-bold border border-gray-100">
-                        {user.name.charAt(0)}
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500 uppercase tracking-wider">
-                          {user.role === 'admin' ? 'Administrador' : user.role === 'analyst' ? 'Analista' : 'Corretor'}
-                        </p>
-                      </div>
-                    </div>
-                    <LogIn size={20} className="text-gray-300 group-hover:text-indigo-600 transition-colors" />
-                  </button>
-                ))
-              )}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Usuário</label>
+              <input 
+                autoFocus
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="Nome do usuário"
+                className={`w-full px-4 py-3 bg-gray-50 border ${loginError ? 'border-red-500 ring-2 ring-red-500/10' : 'border-gray-200'} rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all`}
+              />
             </div>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Senha de Acesso</label>
-                <input 
-                  autoFocus
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Digite sua senha"
-                  className={`w-full px-4 py-3 bg-gray-50 border ${loginError ? 'border-red-500 ring-2 ring-red-500/10' : 'border-gray-200'} rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all`}
-                />
-                {loginError && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 uppercase tracking-wider">Senha incorreta. Tente novamente.</p>}
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setSelectedUser(null);
-                    setPassword('');
-                    setLoginError(false);
-                  }}
-                  className="flex-1 px-4 py-3 text-sm font-bold text-gray-500 hover:bg-gray-100 rounded-2xl transition-all"
-                >
-                  Voltar
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-[2] px-4 py-3 bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 rounded-2xl transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
-                >
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1 tracking-wider">Senha</label>
+              <input 
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                className={`w-full px-4 py-3 bg-gray-50 border ${loginError ? 'border-red-500 ring-2 ring-red-500/10' : 'border-gray-200'} rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all`}
+              />
+              {loginError && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1 uppercase tracking-wider">Usuário ou senha incorretos.</p>}
+            </div>
+            <button 
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isLoading ? 'Carregando...' : (
+                <>
                   Entrar <LogIn size={18} />
-                </button>
-              </div>
-              <p className="text-center text-[10px] text-gray-400 mt-4">Dica: A senha padrão para todos é <span className="font-bold">123</span></p>
-            </form>
-          )}
+                </>
+              )}
+            </button>
+            <p className="text-center text-[10px] text-gray-400 mt-4">Dica: Tente &quot;Leonardo Morana&quot; com a senha &quot;123&quot;</p>
+          </form>
         </motion.div>
       </div>
     );

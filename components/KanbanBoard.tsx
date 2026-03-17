@@ -7,7 +7,7 @@ import {
   STATUS_ORDER 
 } from '@/lib/types';
 import { motion } from 'motion/react';
-import { MoreVertical, Clock, FileText, User, Brain } from 'lucide-react';
+import { MoreVertical, Clock, FileText, User, Brain, ArrowRightLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -94,19 +94,33 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit }: KanbanBoardPr
                 </div>
 
                 <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="relative group/select">
+                      <select
+                        value={customer.status}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          onUpdateStatus(customer.id, { status: e.target.value as CreditStatus });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="appearance-none bg-gray-50 border border-gray-200 text-[10px] font-bold text-gray-600 py-1 pl-2 pr-6 rounded-lg cursor-pointer hover:bg-white hover:border-indigo-300 transition-all outline-none"
+                      >
+                        {STATUS_ORDER.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <ArrowRightLeft size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1 text-[10px] text-gray-400">
                       <FileText size={12} />
                       {customer.documents.length}
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                      <Clock size={12} />
-                      {formatDistanceToNow(new Date(customer.updatedAt), { addSuffix: true, locale: ptBR })}
+                    <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
+                      {customer.analyst.split(' ').map(n => n[0]).join('')}
                     </div>
-                  </div>
-                  
-                  <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
-                    {customer.analyst.split(' ').map(n => n[0]).join('')}
                   </div>
                 </div>
               </motion.div>
