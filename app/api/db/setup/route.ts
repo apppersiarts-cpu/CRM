@@ -34,6 +34,15 @@ export async function GET() {
         unit TEXT NOT NULL,
         property_value NUMERIC NOT NULL,
         financed_value NUMERIC NOT NULL,
+        federal_subsidy NUMERIC DEFAULT 0,
+        state_subsidy NUMERIC DEFAULT 0,
+        fgts NUMERIC DEFAULT 0,
+        financing_mode TEXT DEFAULT 'associativo',
+        has_second_proponent BOOLEAN DEFAULT FALSE,
+        second_proponent_name TEXT,
+        second_proponent_cpf TEXT,
+        second_proponent_income NUMERIC,
+        possible_installment NUMERIC DEFAULT 0,
         status TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -44,6 +53,21 @@ export async function GET() {
         status_history JSONB DEFAULT '[]'
       );
     `;
+
+    // Add new columns if they don't exist (for existing tables)
+    try {
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS federal_subsidy NUMERIC DEFAULT 0`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS state_subsidy NUMERIC DEFAULT 0`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS fgts NUMERIC DEFAULT 0`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS financing_mode TEXT DEFAULT 'associativo'`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS has_second_proponent BOOLEAN DEFAULT FALSE`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS second_proponent_name TEXT`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS second_proponent_cpf TEXT`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS second_proponent_income NUMERIC`;
+      await sql`ALTER TABLE customers ADD COLUMN IF NOT EXISTS possible_installment NUMERIC DEFAULT 0`;
+    } catch (e) {
+      console.log('Columns might already exist');
+    }
 
     // Create settings table
     await sql`

@@ -65,7 +65,7 @@ export function CustomerTable({ customers, onEdit, stageLabels }: CustomerTableP
                 <p className="text-sm text-gray-700 font-medium">{customer.project}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex -space-x-1">
-                    {['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].map((type) => {
+                    {['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].map((type) => {
                       const isPresent = customer.documents.some(d => d.type === type);
                       return (
                         <div 
@@ -79,13 +79,18 @@ export function CustomerTable({ customers, onEdit, stageLabels }: CustomerTableP
                     })}
                   </div>
                   <span className="text-[10px] text-gray-400 font-medium">
-                    {customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].includes(d.type)).length}/5
+                    {customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length}/7
                   </span>
                 </div>
               </td>
               <td className="px-6 py-4">
                 <p className="text-sm text-gray-700 font-medium">{customer.brokerName}</p>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Parceiro</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Parceiro</p>
+                  <span className={`text-[8px] font-bold uppercase px-1 rounded ${customer.financingMode === 'associativo' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
+                    {customer.financingMode}
+                  </span>
+                </div>
               </td>
               <td className="px-6 py-4">
                 <p className="text-sm font-medium text-gray-900">

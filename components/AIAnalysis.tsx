@@ -116,7 +116,7 @@ export function AIAnalysis({ customer }: AIAnalysisProps) {
           {/* Header Score */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Score CrediFlow</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Score HOME CRED</p>
               <div className={`text-3xl font-black ${analysis.score > 70 ? 'text-emerald-600' : analysis.score > 40 ? 'text-amber-500' : 'text-red-500'}`}>
                 {analysis.score}
               </div>

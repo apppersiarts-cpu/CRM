@@ -86,13 +86,13 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit, stageLabels }: 
                     <div className="flex items-center justify-between text-[10px] mb-1">
                       <span className="text-gray-400 uppercase font-bold tracking-tighter">Documentação</span>
                       <span className="text-gray-600 font-bold">
-                        {Math.round((customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].includes(d.type)).length / 5) * 100)}%
+                        {Math.round((customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length / 7) * 100)}%
                       </span>
                     </div>
                     <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-indigo-500 transition-all duration-500" 
-                        style={{ width: `${(customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].includes(d.type)).length / 5) * 100}%` }}
+                        style={{ width: `${(customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length / 7) * 100}%` }}
                       />
                     </div>
                   </div>

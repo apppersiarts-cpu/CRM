@@ -28,7 +28,7 @@ export interface Broker {
 export interface Document {
   id: string;
   name: string;
-  type: "RG" | "CPF" | "COMPROVANTE_RENDA" | "IRPF" | "EXTRATO_FGTS" | "OUTROS";
+  type: "RG" | "CPF" | "COMPROVANTE_RENDA" | "IRPF" | "EXTRATO_FGTS" | "SIMULACAO" | "APROVACAO_CEF" | "OUTROS";
   url: string;
   uploadedAt: string;
 }
@@ -42,6 +42,15 @@ export interface Customer {
   unit: string;
   propertyValue: number;
   financedValue: number;
+  federalSubsidy: number;
+  stateSubsidy: number;
+  fgts: number;
+  financingMode: 'associativo' | 'chaves';
+  hasSecondProponent: boolean;
+  secondProponentName?: string;
+  secondProponentCpf?: string;
+  secondProponentIncome?: number;
+  possibleInstallment: number;
   status: CreditStatus;
   createdAt: string;
   updatedAt: string;

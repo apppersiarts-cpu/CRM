@@ -328,7 +328,7 @@ export default function CRMPage() {
             <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto mb-4">
               <ShieldCheck size={32} />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">CrediFlow CRM</h1>
+            <h1 className="text-2xl font-bold text-gray-900">HOME CRED CRM</h1>
             <p className="text-gray-500 mt-2">Acesse sua conta para continuar</p>
           </div>
 
@@ -382,7 +382,7 @@ export default function CRMPage() {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
               <TrendingUp size={20} />
             </div>
-            <span>CrediFlow</span>
+            <span>HOME CRED</span>
           </div>
         </div>
 

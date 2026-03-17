@@ -39,6 +39,12 @@ export function CustomerModal({
       unit: '',
       propertyValue: 0,
       financedValue: 0,
+      federalSubsidy: 0,
+      stateSubsidy: 0,
+      fgts: 0,
+      financingMode: 'associativo',
+      hasSecondProponent: false,
+      possibleInstallment: 0,
       status: CreditStatus.NOVO_CADASTRO,
       brokerId: '',
       brokerName: '',
@@ -48,6 +54,7 @@ export function CustomerModal({
 
   const [activeTab, setActiveTab] = useState<'info' | 'docs' | 'ai'>('info');
   const [configMissing, setConfigMissing] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -88,10 +95,18 @@ export function CustomerModal({
 
   const onDrop = async (acceptedFiles: File[]) => {
     setIsUploading(true);
+    setDuplicateError(null);
     try {
       const newDocs: Document[] = [];
       
       for (const file of acceptedFiles) {
+        // Check for duplicate filenames
+        const isDuplicate = formData.documents?.some(d => d.name === file.name);
+        if (isDuplicate) {
+          setDuplicateError(`O documento "${file.name}" já foi enviado.`);
+          continue;
+        }
+
         const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
           method: 'POST',
           body: file,
@@ -288,6 +303,133 @@ export function CustomerModal({
                     />
                   </div>
                 </div>
+
+                <div className="col-span-2 grid grid-cols-3 gap-4 p-4 bg-indigo-50/30 rounded-xl border border-indigo-100">
+                  <div className="col-span-3">
+                    <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest mb-2">Subsídios e FGTS</h4>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Subsidio Federal</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+                      <input 
+                        type="number"
+                        value={formData.federalSubsidy || ''}
+                        onChange={e => setFormData({...formData, federalSubsidy: Number(e.target.value)})}
+                        className="w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Subsidio Estadual</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+                      <input 
+                        type="number"
+                        value={formData.stateSubsidy || ''}
+                        onChange={e => setFormData({...formData, stateSubsidy: Number(e.target.value)})}
+                        className="w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">FGTS</label>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+                      <input 
+                        type="number"
+                        value={formData.fgts || ''}
+                        onChange={e => setFormData({...formData, fgts: Number(e.target.value)})}
+                        className="w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2 grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Modo de Financiamento</label>
+                    <select 
+                      value={formData.financingMode}
+                      onChange={e => setFormData({...formData, financingMode: e.target.value as 'associativo' | 'chaves'})}
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="associativo">Associativo</option>
+                      <option value="chaves">Chaves</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Parcela Possível</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                      <input 
+                        type="number"
+                        value={formData.possibleInstallment || ''}
+                        onChange={e => setFormData({...formData, possibleInstallment: Number(e.target.value)})}
+                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={formData.hasSecondProponent}
+                        onChange={e => setFormData({...formData, hasSecondProponent: e.target.checked})}
+                        className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-bold text-gray-700">Incluir Segundo Proponente</span>
+                    </label>
+                  </div>
+
+                  <AnimatePresence>
+                    {formData.hasSecondProponent && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden space-y-4"
+                      >
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome do Segundo Proponente</label>
+                            <input 
+                              type="text"
+                              value={formData.secondProponentName || ''}
+                              onChange={e => setFormData({...formData, secondProponentName: e.target.value})}
+                              className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">CPF</label>
+                            <input 
+                              type="text"
+                              value={formData.secondProponentCpf || ''}
+                              onChange={e => setFormData({...formData, secondProponentCpf: e.target.value})}
+                              className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Renda</label>
+                            <div className="relative">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]">R$</span>
+                              <input 
+                                type="number"
+                                value={formData.secondProponentIncome || ''}
+                                onChange={e => setFormData({...formData, secondProponentIncome: Number(e.target.value)})}
+                                className="w-full pl-7 pr-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Status / Etapa *</label>
                   <select 
@@ -356,7 +498,9 @@ export function CustomerModal({
                     { label: 'CPF', type: 'CPF' },
                     { label: 'Renda', type: 'COMPROVANTE_RENDA' },
                     { label: 'IRPF', type: 'IRPF' },
-                    { label: 'FGTS', type: 'EXTRATO_FGTS' }
+                    { label: 'FGTS', type: 'EXTRATO_FGTS' },
+                    { label: 'Simulação', type: 'SIMULACAO' },
+                    { label: 'Aprovação CEF', type: 'APROVACAO_CEF' }
                   ].map(item => {
                     const isPresent = formData.documents?.some(d => d.type === item.type);
                     return (
@@ -384,6 +528,23 @@ export function CustomerModal({
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, JPG, PNG</p>
               </div>
+
+              {duplicateError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-3"
+                >
+                  <AlertCircle className="text-red-600 shrink-0" size={18} />
+                  <p className="text-xs font-medium text-red-800">{duplicateError}</p>
+                  <button 
+                    onClick={() => setDuplicateError(null)}
+                    className="ml-auto text-red-400 hover:text-red-600"
+                  >
+                    <X size={14} />
+                  </button>
+                </motion.div>
+              )}
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -419,6 +580,8 @@ export function CustomerModal({
                                 <option value="COMPROVANTE_RENDA">Renda</option>
                                 <option value="IRPF">IRPF</option>
                                 <option value="EXTRATO_FGTS">FGTS</option>
+                                <option value="SIMULACAO">Simulação</option>
+                                <option value="APROVACAO_CEF">Aprovação CEF</option>
                                 <option value="OUTROS">Outros</option>
                               </select>
                               <span className="text-[10px] text-gray-400">•</span>

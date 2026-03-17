@@ -210,7 +210,7 @@ export function SettingsPanel({ userRole }: SettingsPanelProps) {
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome da Plataforma</label>
                 <input 
                   type="text" 
-                  defaultValue="CrediFlow CRM"
+                  defaultValue="HOME CRED CRM"
                   disabled={!isAdmin}
                   className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all disabled:opacity-50"
                 />

@@ -1,4 +1,4 @@
-# CrediFlow CRM - Gestão de Crédito Imobiliário
+# HOME CRED CRM - Gestão de Crédito Imobiliário
 
 Plataforma avançada para gestão de processos de crédito imobiliário, integrando corretores, analistas e inteligência artificial para agilizar a aprovação de financiamentos.
 
