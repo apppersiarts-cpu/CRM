@@ -15,7 +15,8 @@ import {
   TrendingUp,
   DollarSign,
   Filter,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, differenceInDays } from 'date-fns';
@@ -64,6 +65,17 @@ export default function CRMPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   // Initialize database and load data
   useEffect(() => {
@@ -146,15 +158,21 @@ export default function CRMPage() {
   }, [customers, searchTerm, currentUser]);
 
   const handleAddCustomer = async (data: Partial<Customer>) => {
+    // Check for duplicate CPF
+    if (data.cpf && customers.some(c => c.cpf === data.cpf)) {
+      alert('Já existe um cliente cadastrado com este CPF.');
+      return;
+    }
+
     const newCustomer: Customer = {
       id: Math.random().toString(36).substr(2, 9),
-      name: data.name!,
-      cpf: data.cpf!,
-      income: data.income!,
-      project: data.project!,
-      unit: data.unit!,
-      propertyValue: data.propertyValue!,
-      financedValue: data.financedValue!,
+      name: data.name || '',
+      cpf: data.cpf || '',
+      income: data.income ?? 0,
+      project: data.project || '',
+      unit: data.unit || '',
+      propertyValue: data.propertyValue ?? 0,
+      financedValue: data.financedValue ?? 0,
       federalSubsidy: data.federalSubsidy ?? 0,
       stateSubsidy: data.stateSubsidy ?? 0,
       fgts: data.fgts ?? 0,
@@ -167,9 +185,9 @@ export default function CRMPage() {
       status: CreditStatus.NOVO_CADASTRO,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      analyst: "Leonardo Morana", 
-      brokerId: currentUser?.id || '1',
-      brokerName: currentUser?.name || 'Leonardo Morana',
+      analyst: currentUser?.role === 'admin' || currentUser?.role === 'analyst' ? currentUser.name : "Aguardando Atribuição", 
+      brokerId: currentUser?.role === 'broker' ? currentUser.id : (data.brokerId || '1'),
+      brokerName: currentUser?.role === 'broker' ? currentUser.name : (data.brokerName || 'Leonardo Morana'),
       documents: data.documents || [],
       statusHistory: [{
         status: CreditStatus.NOVO_CADASTRO,
@@ -221,17 +239,23 @@ export default function CRMPage() {
   };
 
   const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm('Deseja realmente excluir este cliente?')) {
-      try {
-        await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-        setCustomers(prev => prev.filter(c => c.id !== id));
-        setIsModalOpen(false);
-        setSelectedCustomer(undefined);
-      } catch (error) {
-        console.error('Failed to delete customer:', error);
-        alert('Erro ao excluir cliente do banco de dados.');
+    setConfirmModal({
+      isOpen: true,
+      title: 'Excluir Cliente',
+      message: 'Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+          setCustomers(prev => prev.filter(c => c.id !== id));
+          setIsModalOpen(false);
+          setSelectedCustomer(undefined);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('Failed to delete customer:', error);
+          alert('Erro ao excluir cliente do banco de dados.');
+        }
       }
-    }
+    });
   };
 
   const exportToCSV = () => {
@@ -301,15 +325,21 @@ export default function CRMPage() {
   };
 
   const handleDeleteBroker = async (id: string) => {
-    if (confirm('Deseja realmente excluir este corretor?')) {
-      try {
-        await fetch(`/api/brokers/${id}`, { method: 'DELETE' });
-        setBrokers(prev => prev.filter(b => b.id !== id));
-      } catch (error) {
-        console.error('Failed to delete broker:', error);
-        alert('Erro ao excluir corretor do banco de dados.');
+    setConfirmModal({
+      isOpen: true,
+      title: 'Excluir Corretor',
+      message: 'Tem certeza que deseja excluir este corretor? Esta ação não pode ser desfeita.',
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/brokers/${id}`, { method: 'DELETE' });
+          setBrokers(prev => prev.filter(b => b.id !== id));
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('Failed to delete broker:', error);
+          alert('Erro ao excluir corretor do banco de dados.');
+        }
       }
-    }
+    });
   };
 
   const handleResetPassword = (id: string) => {
@@ -327,6 +357,11 @@ export default function CRMPage() {
       }
       setCurrentUser(user);
       setLoginError(false);
+      if (user.role === 'broker') {
+        setView('kanban');
+      } else {
+        setView('dashboard');
+      }
     } else {
       setLoginError(true);
     }
@@ -403,20 +438,24 @@ export default function CRMPage() {
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
-          <button 
-            onClick={() => setView('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
-          >
-            <LayoutDashboard size={20} />
-            Dashboard
-          </button>
-          <button 
-            onClick={() => setView('table')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'table' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
-          >
-            <Users size={20} />
-            Clientes
-          </button>
+          {(currentUser.role === 'admin' || currentUser.role === 'analyst') && (
+            <>
+              <button 
+                onClick={() => setView('dashboard')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'dashboard' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                <LayoutDashboard size={20} />
+                Dashboard
+              </button>
+              <button 
+                onClick={() => setView('table')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'table' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
+                <Users size={20} />
+                Clientes
+              </button>
+            </>
+          )}
           <button 
             onClick={() => setView('kanban')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'kanban' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -435,13 +474,15 @@ export default function CRMPage() {
             </button>
           )}
 
-          <button 
-            onClick={() => setView('settings')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'settings' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
-          >
-            <SettingsIcon size={20} />
-            Configurações
-          </button>
+          {(currentUser.role === 'admin' || currentUser.role === 'analyst') && (
+            <button 
+              onClick={() => setView('settings')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${view === 'settings' ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              <SettingsIcon size={20} />
+              Configurações
+            </button>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-100 space-y-3">
@@ -626,6 +667,42 @@ export default function CRMPage() {
         stageLabels={settings.stageLabels}
         onDelete={currentUser.role === 'admin' ? handleDeleteCustomer : undefined}
       />
+
+      {/* Global Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.isOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center"
+            >
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{confirmModal.title}</h3>
+              <p className="text-sm text-gray-500 mb-8">
+                {confirmModal.message}
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={confirmModal.onConfirm}
+                  className="flex-1 px-6 py-3 bg-red-500 text-white text-sm font-bold hover:bg-red-600 rounded-xl transition-all shadow-lg shadow-red-100"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

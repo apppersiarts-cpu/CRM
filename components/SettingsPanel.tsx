@@ -45,6 +45,7 @@ export function SettingsPanel({ userRole, currentUserId }: SettingsPanelProps) {
   const [staff, setStaff] = useState<StaffUser[]>([]);
   const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffUser | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [newStaff, setNewStaff] = useState<Partial<StaffUser>>({ role: 'analyst', status: 'active' });
 
   const isAdmin = userRole === 'admin';
@@ -132,17 +133,16 @@ export function SettingsPanel({ userRole, currentUserId }: SettingsPanelProps) {
   };
 
   const handleDeleteStaff = async (id: string) => {
-    if (confirm('Deseja realmente excluir este membro da equipe?')) {
-      try {
-        const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          setStaff(staff.filter(s => s.id !== id));
-          // Reload to update global user list
-          setTimeout(() => window.location.reload(), 1500);
-        }
-      } catch (error) {
-        console.error('Failed to delete staff:', error);
+    try {
+      const res = await fetch(`/api/staff/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setStaff(staff.filter(s => s.id !== id));
+        setDeleteConfirmId(null);
+        // Reload to update global user list
+        setTimeout(() => window.location.reload(), 1500);
       }
+    } catch (error) {
+      console.error('Failed to delete staff:', error);
     }
   };
 
@@ -462,15 +462,15 @@ export function SettingsPanel({ userRole, currentUserId }: SettingsPanelProps) {
                     <div className="flex items-center gap-1">
                       <button 
                         onClick={() => handleEditStaff(member)}
-                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                         title="Editar"
                       >
                         <Edit2 size={16} />
                       </button>
                       {member.id !== currentUserId && ( // Don't allow deleting yourself to prevent lockout
                         <button 
-                          onClick={() => handleDeleteStaff(member.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          onClick={() => setDeleteConfirmId(member.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                           title="Excluir"
                         >
                           <Trash2 size={16} />
@@ -480,6 +480,42 @@ export function SettingsPanel({ userRole, currentUserId }: SettingsPanelProps) {
                   </div>
                 ))}
               </div>
+
+              {/* Delete Confirmation Modal */}
+              <AnimatePresence>
+                {deleteConfirmId && (
+                  <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                      className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center"
+                    >
+                      <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Trash2 size={32} />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Confirmar Exclusão</h3>
+                      <p className="text-sm text-gray-500 mb-8">
+                        Tem certeza que deseja excluir este membro da equipe? Esta ação não pode ser desfeita.
+                      </p>
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={() => setDeleteConfirmId(null)}
+                          className="flex-1 px-6 py-3 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteStaff(deleteConfirmId)}
+                          className="flex-1 px-6 py-3 bg-red-500 text-white text-sm font-bold hover:bg-red-600 rounded-xl transition-all shadow-lg shadow-red-100"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
             </section>
           )}
 

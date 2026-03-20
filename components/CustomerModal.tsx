@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useDropzone } from 'react-dropzone';
 import { Customer, CreditStatus, Document, Broker, STATUS_ORDER } from '@/lib/types';
 import { AIAnalysis } from './AIAnalysis';
+import { maskCPF } from '@/lib/utils';
 
 interface CustomerModalProps {
   isOpen: boolean;
@@ -240,7 +241,7 @@ export function CustomerModal({
                     type="text"
                     placeholder="000.000.000-00"
                     value={formData.cpf}
-                    onChange={e => setFormData({...formData, cpf: e.target.value})}
+                    onChange={e => setFormData({...formData, cpf: maskCPF(e.target.value)})}
                     className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                   />
                 </div>
@@ -252,7 +253,7 @@ export function CustomerModal({
                       required
                       type="number"
                       value={formData.income || ''}
-                      onChange={e => setFormData({...formData, income: Number(e.target.value)})}
+                      onChange={e => setFormData({...formData, income: e.target.value === '' ? 0 : Number(e.target.value)})}
                       className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                     />
                   </div>
@@ -285,7 +286,7 @@ export function CustomerModal({
                       required
                       type="number"
                       value={formData.propertyValue || ''}
-                      onChange={e => setFormData({...formData, propertyValue: Number(e.target.value)})}
+                      onChange={e => setFormData({...formData, propertyValue: e.target.value === '' ? 0 : Number(e.target.value)})}
                       className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                     />
                   </div>
@@ -298,7 +299,7 @@ export function CustomerModal({
                       required
                       type="number"
                       value={formData.financedValue || ''}
-                      onChange={e => setFormData({...formData, financedValue: Number(e.target.value)})}
+                      onChange={e => setFormData({...formData, financedValue: e.target.value === '' ? 0 : Number(e.target.value)})}
                       className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                     />
                   </div>
