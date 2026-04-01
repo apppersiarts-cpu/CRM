@@ -209,20 +209,6 @@ export function CustomerModal({
                 </div>
               )}
 
-              {/* Alerta de Documentação Pendente */}
-              {formData.documents && formData.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS'].includes(d.type)).length < 5 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">
-                  <AlertCircle className="text-amber-600 shrink-0" size={18} />
-                  <div>
-                    <p className="text-xs font-bold text-amber-800">Documentação Incompleta</p>
-                    <p className="text-[10px] text-amber-700 mt-0.5">
-                      Faltam documentos obrigatórios para a análise de crédito. 
-                      <button type="button" onClick={() => setActiveTab('docs')} className="ml-1 underline font-bold">Ir para Documentos</button>
-                    </p>
-                  </div>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Nome Completo *</label>
@@ -491,7 +477,7 @@ export function CustomerModal({
               <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
                 <h3 className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <CheckCircle size={14} />
-                  Checklist de Documentos
+                  Guia de Documentos
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                   {[
@@ -619,7 +605,7 @@ export function CustomerModal({
                       <File size={24} />
                     </div>
                     <p className="text-sm text-gray-500">Nenhum documento anexado ainda.</p>
-                    <p className="text-xs text-gray-400 mt-1">Faça o upload dos documentos obrigatórios para análise.</p>
+                    <p className="text-xs text-gray-400 mt-1">Faça o upload dos documentos para análise.</p>
                   </div>
                 )}
               </div>
