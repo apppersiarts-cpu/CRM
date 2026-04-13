@@ -35,7 +35,7 @@ export function AIAnalysis({ customer }: AIAnalysisProps) {
         Considere as seguintes regras de mercado:
         1. Comprometimento de renda ideal: até 30% da renda mensal.
         2. LTV (Loan-to-Value): ideal até 80% do valor do imóvel.
-        3. Documentação: RG, CPF, Comprovante de Renda e IRPF são recomendados para uma análise precisa.
+        3. Documentação: O envio do Dossiê Único (contendo RG, CPF, Comprovante de Renda e IRPF) é recomendado para uma análise precisa.
         
         Retorne um JSON com:
         {

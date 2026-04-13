@@ -28,7 +28,7 @@ export interface Broker {
 export interface Document {
   id: string;
   name: string;
-  type: "RG" | "CPF" | "COMPROVANTE_RENDA" | "IRPF" | "EXTRATO_FGTS" | "SIMULACAO" | "APROVACAO_CEF" | "OUTROS";
+  type: "RG" | "CPF" | "COMPROVANTE_RENDA" | "IRPF" | "EXTRATO_FGTS" | "SIMULACAO" | "APROVACAO_CEF" | "DOSSIE_UNICO" | "OUTROS";
   url: string;
   uploadedAt: string;
 }

@@ -81,18 +81,17 @@ export function KanbanBoard({ customers, onUpdateStatus, onEdit, stageLabels }: 
                     <span className="font-medium text-gray-600">{customer.brokerName}</span>
                   </div>
                   
-                  {/* Document Progress */}
+                  {/* Document Status */}
                   <div className="pt-1">
                     <div className="flex items-center justify-between text-[10px] mb-1">
                       <span className="text-gray-400 uppercase font-bold tracking-tighter">Documentação</span>
-                      <span className="text-gray-600 font-bold">
-                        {Math.round((customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length / 7) * 100)}%
+                      <span className={customer.documents.some(d => d.type === 'DOSSIE_UNICO') ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
+                        {customer.documents.some(d => d.type === 'DOSSIE_UNICO') ? 'Completa' : 'Pendente'}
                       </span>
                     </div>
                     <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-indigo-500 transition-all duration-500" 
-                        style={{ width: `${(customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length / 7) * 100}%` }}
+                        className={`h-full transition-all duration-500 ${customer.documents.some(d => d.type === 'DOSSIE_UNICO') ? 'bg-emerald-500 w-full' : 'bg-amber-400 w-1/4'}`}
                       />
                     </div>
                   </div>

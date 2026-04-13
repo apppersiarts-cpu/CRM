@@ -95,46 +95,39 @@ export function CustomerModal({
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
     setIsUploading(true);
     setDuplicateError(null);
     try {
-      const newDocs: Document[] = [];
+      const file = acceptedFiles[0]; // Only take the first file
       
-      for (const file of acceptedFiles) {
-        // Check for duplicate filenames
-        const isDuplicate = formData.documents?.some(d => d.name === file.name);
-        if (isDuplicate) {
-          setDuplicateError(`O documento "${file.name}" já foi enviado.`);
-          continue;
+      const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        body: file,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error?.includes('Configuração ausente')) {
+          setConfigMissing(true);
+          setActiveTab('info');
         }
-
-        const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
-          method: 'POST',
-          body: file,
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          if (data.error?.includes('Configuração ausente')) {
-            setConfigMissing(true);
-            setActiveTab('info'); // Volta para a aba info para mostrar o erro proeminente
-          }
-          throw new Error(data.error || 'Upload failed');
-        }
-
-        newDocs.push({
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          type: "OUTROS",
-          url: data.url,
-          uploadedAt: new Date().toISOString()
-        });
+        throw new Error(data.error || 'Upload failed');
       }
+
+      const newDoc: Document = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: "DOSSIE_UNICO",
+        url: data.url,
+        uploadedAt: new Date().toISOString()
+      };
       
       setFormData(prev => ({
         ...prev,
-        documents: [...(prev.documents || []), ...newDocs]
+        documents: [newDoc] // Replace existing documents with the new single file
       }));
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -473,35 +466,6 @@ export function CustomerModal({
 
           <div className={activeTab === 'docs' ? 'block' : 'hidden'}>
             <div className="space-y-6">
-              {/* Checklist de Documentos Obrigatórios */}
-              <div className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
-                <h3 className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <CheckCircle size={14} />
-                  Guia de Documentos
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: 'RG', type: 'RG' },
-                    { label: 'CPF', type: 'CPF' },
-                    { label: 'Renda', type: 'COMPROVANTE_RENDA' },
-                    { label: 'IRPF', type: 'IRPF' },
-                    { label: 'FGTS', type: 'EXTRATO_FGTS' },
-                    { label: 'Simulação', type: 'SIMULACAO' },
-                    { label: 'Aprovação CEF', type: 'APROVACAO_CEF' }
-                  ].map(item => {
-                    const isPresent = formData.documents?.some(d => d.type === item.type);
-                    return (
-                      <div key={item.type} className="flex items-center gap-2 text-xs">
-                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${isPresent ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-white border-gray-300 text-transparent'}`}>
-                          <CheckCircle size={10} />
-                        </div>
-                        <span className={isPresent ? 'text-gray-900 font-medium' : 'text-gray-400'}>{item.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
               <div 
                 {...getRootProps()} 
                 className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-400 hover:bg-gray-50'} ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -511,9 +475,9 @@ export function CustomerModal({
                   {isUploading ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} />}
                 </div>
                 <p className="text-sm font-medium text-gray-900">
-                  {isUploading ? 'Enviando documentos...' : 'Arraste documentos aqui ou clique para selecionar'}
+                  {isUploading ? 'Enviando arquivo...' : 'Arraste o Dossiê Único aqui ou clique para selecionar'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, JPG, PNG</p>
+                <p className="text-xs text-gray-500 mt-1">Formatos aceitos: PDF, ZIP, JPG, PNG</p>
               </div>
 
               {duplicateError && (
@@ -552,25 +516,9 @@ export function CustomerModal({
                           <div>
                             <p className="text-sm font-bold text-gray-900 truncate max-w-[240px]">{doc.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <select 
-                                value={doc.type}
-                                onChange={(e) => {
-                                  const newDocs = formData.documents?.map(d => 
-                                    d.id === doc.id ? { ...d, type: e.target.value as any } : d
-                                  );
-                                  setFormData({ ...formData, documents: newDocs });
-                                }}
-                                className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border-none focus:ring-0 cursor-pointer hover:bg-indigo-100 transition-colors"
-                              >
-                                <option value="RG">RG</option>
-                                <option value="CPF">CPF</option>
-                                <option value="COMPROVANTE_RENDA">Renda</option>
-                                <option value="IRPF">IRPF</option>
-                                <option value="EXTRATO_FGTS">FGTS</option>
-                                <option value="SIMULACAO">Simulação</option>
-                                <option value="APROVACAO_CEF">Aprovação CEF</option>
-                                <option value="OUTROS">Outros</option>
-                              </select>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                                Dossiê Único
+                              </span>
                               <span className="text-[10px] text-gray-400">•</span>
                               <span className="text-[10px] text-gray-400">
                                 {new Date(doc.uploadedAt).toLocaleDateString('pt-BR')}
@@ -604,8 +552,8 @@ export function CustomerModal({
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-3">
                       <File size={24} />
                     </div>
-                    <p className="text-sm text-gray-500">Nenhum documento anexado ainda.</p>
-                    <p className="text-xs text-gray-400 mt-1">Faça o upload dos documentos para análise.</p>
+                    <p className="text-sm text-gray-500">Nenhum arquivo anexado ainda.</p>
+                    <p className="text-xs text-gray-400 mt-1">Faça o upload do dossiê completo para análise.</p>
                   </div>
                 )}
               </div>

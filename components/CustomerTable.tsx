@@ -64,23 +64,17 @@ export function CustomerTable({ customers, onEdit, stageLabels }: CustomerTableP
               <td className="px-6 py-4">
                 <p className="text-sm text-gray-700 font-medium">{customer.project}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <div className="flex -space-x-1">
-                    {['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].map((type) => {
-                      const isPresent = customer.documents.some(d => d.type === type);
-                      return (
-                        <div 
-                          key={type}
-                          title={type}
-                          className={`w-4 h-4 rounded-full border-2 border-white flex items-center justify-center text-[6px] font-bold ${isPresent ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-400'}`}
-                        >
-                          {type[0]}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <span className="text-[10px] text-gray-400 font-medium">
-                    {customer.documents.filter(d => ['RG', 'CPF', 'COMPROVANTE_RENDA', 'IRPF', 'EXTRATO_FGTS', 'SIMULACAO', 'APROVACAO_CEF'].includes(d.type)).length}/7
-                  </span>
+                  {customer.documents.some(d => d.type === 'DOSSIE_UNICO') ? (
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                      <FileText size={10} />
+                      DOSSIÊ OK
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                      <FileText size={10} />
+                      PENDENTE
+                    </div>
+                  )}
                 </div>
               </td>
               <td className="px-6 py-4">
